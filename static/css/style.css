@@ -1,0 +1,74 @@
+body { margin:0;position:fixed;top:0;right:0;bottom:0;left:0;padding: 5px; }
+
+* {
+  font-family: 'Raleway';
+  color:  #454545 ;
+}
+
+body #body-contents {
+  display: flex;
+  flex-flow: column;
+  padding: 10px;
+  overflow-y: scroll;
+  height: -webkit-fill-available;
+}
+
+body .selections {
+  display: flex;
+  flex-flow: row;
+  margin-bottom: 20px;
+}
+
+#scorecard-select-container,
+#scorecard-college-select-container {
+  margin-top: 10px;
+  margin-right: 50px;
+}
+
+.multiselect-container {
+  width: 500px;
+  max-height: 400px;
+  overflow-y: scroll;
+}
+
+.charts {
+  display: flex;
+  flex-flow: row;
+  flex-wrap: wrap;
+}
+
+.charts .hist {
+  margin-left: 20px;
+}
+
+.charts .chart-title {
+  font-size: 13px;
+  display: block;
+  text-align: center;
+  font-weight: bold;
+}
+.charts .chart-label {
+  font-size: 11px;
+  display: block;
+  text-align: center;
+}
+.charts .chart-label.danger {
+  color: darkred;
+  font-weight: bold;
+}
+
+.charts .hist svg .x.axis .tick text {
+  transform: rotate(45deg) translate(7px,-7px);
+  text-anchor: start;
+}
+
+.charts .hist svg rect {
+  fill: #b7b7b9;
+  stroke: #6c6c6c;
+  stroke-width: .5px;
+}
+
+.charts .hist svg rect.highlight {
+  stroke: #2d96cb;
+  stroke-width: 2px;
+}
