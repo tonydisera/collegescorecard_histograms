@@ -25,20 +25,61 @@
 <div id="body-contents">
 
   <h1>College Scorecard Distributions</h1>
-  <div class="selections">
-    <div id="scorecard-select-container">
-      <select id="scorecard-select" multiple="multiple">
-      </select>
+
+  <div id="chart-row-1" class="chart-row hide">
+    <div class="selections">
+      <div id="scorecard-select-container">
+        <select id="scorecard-select" multiple="multiple">
+        </select>
+      </div>
+      <div id="scorecard-college-select-container">
+        <select id="scorecard-college-select" multiple="multiple">
+        </select>
+      </div>
+      <button class="btn btn-sm btn-outline-secondary" onclick="addRow(2)">Add row</button>
     </div>
-    <div id="scorecard-college-select-container">
-      <select id="scorecard-college-select" multiple="multiple">
-      </select>
+
+    <div class="charts">
     </div>
   </div>
 
-  <div class="charts">
+  <div id="chart-row-2" class="chart-row hide">
+    <div class="selections">
+      <div id="scorecard-college-select-container">
+        <select id="scorecard-college-select" multiple="multiple">
+        </select>
+      </div>
+      <button class="btn btn-sm btn-outline-secondary" onclick="addRow(3)">Add row</button>
+    </div>
+
+    <div class="charts">
+    </div>
   </div>
 
+  <div id="chart-row-3" class="chart-row hide">
+    <div class="selections">
+      <div id="scorecard-college-select-container">
+        <select id="scorecard-college-select" multiple="multiple">
+        </select>
+      </div>
+      <button class="btn btn-sm btn-outline-secondary" onclick="addRow(4)">Add row</button>
+    </div>
+
+    <div class="charts">
+    </div>
+  </div>
+
+  <div id="chart-row-4" class="chart-row hide">
+    <div class="selections">
+      <div id="scorecard-college-select-container">
+        <select id="scorecard-college-select" multiple="multiple">
+        </select>
+      </div>
+    </div>
+
+    <div class="charts">
+    </div>
+  </div>
 
 </div>
 

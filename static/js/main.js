@@ -1,10 +1,14 @@
 let fields = []
 let selectedFieldMap = {}
 
-let colleges = []
-let selectedCollegeMap = {}
 
-let histChartMap = {}
+let colleges = []
+let selectedCollegeMap = {1: {},
+                          2: {},
+                          3: {},
+                          4: {}}
+
+let histChartMap = {1: {}}
 
 
 $(document).ready(function() {
@@ -14,23 +18,24 @@ $(document).ready(function() {
 });
 
 function init() {
-    initDropdowns();
-    getNumericFields();
-    getColleges();
+    addRow(1)
 }
 
 
-function showHistogram() {
-  promiseGetData()
+function showHistogram(rowNumber=1) {
+  let fieldNames = getSelectedFieldNames();
+  promiseGetData(fieldNames)
   .then(function(data) {
 
-    d3.selectAll(".charts .hist").remove()
-    histChartMap = {}
+    let chartContainerSelector  = "#chart-row-" + rowNumber + " .charts"
+    let chartSelector           = "#chart-row-" + rowNumber + " .charts .hist"
+    d3.selectAll(chartSelector).remove()
+    histChartMap[rowNumber] = {}
 
     getSelectedFieldNames().forEach(function(selectedField) {
       let selectedFieldName = selectedField.split(" ").join("_");
 
-      let selection = d3.select(".charts").append("div").attr("class", "hist " + selectedFieldName);
+      let selection = d3.select(chartContainerSelector).append("div").attr("class", "hist " + selectedFieldName);
 
       selection.append("span").attr("class", "chart-title").text(selectedField)
 
@@ -51,22 +56,39 @@ function showHistogram() {
                .text(nullPctLabel + "% blank")
 
       let histChart = histogram();
-      histChart.width(230)
-               .height(200)
-               .margin({top: 20, bottom: 60, left: 40, right: 30})
+      histChart.width(180)
+               .height(160)
+               .margin({top: 20, bottom: 60, left: 35, right: 30})
       histChart.xValue(function(d) {
         return d[selectedField];
       })
       selection.datum(data)
       histChart(selection);
 
-      histChartMap[selectedFieldName] = histChart;
+      histChartMap[rowNumber][selectedFieldName] = histChart;
     })
     setTimeout(function() {
-      highlightHistograms();
+      highlightHistograms(rowNumber);
     },3000)
 
   })
+}
+
+function addRow(rowNumber) {
+  rowSelector =  "#chart-row-" + rowNumber;
+  d3.select(rowSelector).classed("hide", false)
+
+  initDropdowns(rowNumber);
+
+  if (rowNumber == 1) {
+    getNumericFields(rowNumber);
+  }
+
+  getColleges(rowNumber);
+  if (rowNumber != 1) {
+    showHistogram(rowNumber)
+  }
+
 }
 
 function getSelectedFieldNames() {
@@ -79,9 +101,9 @@ function getSelectedFieldNames() {
 
 }
 
-function getSelectedCollegeNames() {
+function getSelectedCollegeNames(rowNumber=1) {
   return colleges.filter(function(college) {
-    return selectedCollegeMap[college.name];
+    return selectedCollegeMap[rowNumber][college.name];
   })
   .map(function(college) {
     return college.name;
@@ -89,44 +111,49 @@ function getSelectedCollegeNames() {
 
 }
 
-function initDropdowns() {
-  $('#scorecard-select').multiselect(
-    { enableFiltering: true,
-      includeSelectAllOption: true,
-      enableCaseInsensitiveFiltering: true,
-      nonSelectedText: "Select fields",
-      onChange: function(options, checked) {
+function initDropdowns(rowNumber=1) {
+  let fieldSelector = "#chart-row-" + rowNumber + ' #scorecard-select';
+  if (rowNumber == 1) {
+    $(fieldSelector).multiselect(
+      { enableFiltering: true,
+        includeSelectAllOption: true,
+        enableCaseInsensitiveFiltering: true,
+        nonSelectedText: "Select fields",
+        onChange: function(options, checked) {
 
-        if (options && options.length > 0) {
-          if (Array.isArray(options)) {
-            options.forEach(function(option) {
-              let field = option[0].label
+          if (options && options.length > 0) {
+            if (Array.isArray(options)) {
+              options.forEach(function(option) {
+                let field = option[0].label
+                selectedFieldMap[field] = checked;
+              })
+            } else {
+              let field = options[0].label
               selectedFieldMap[field] = checked;
-            })
-          } else {
-            let field = options[0].label
-            selectedFieldMap[field] = checked;
+            }
           }
+        },
+        onDropdownHide: function(event) {
+          showHistogram(rowNumber);
+        },
+        onSelectAll: function(event) {
+          fields.forEach(function(field) {
+            selectedFieldMap[field.name] = true;
+          })
+
+        },
+        onDeselectAll: function(event) {
+          fields.forEach(function(field) {
+            selectedFieldMap[field.name] = false;
+          })
+
         }
-      },
-      onDropdownHide: function(event) {
-        showHistogram();
-      },
-      onSelectAll: function(event) {
-        fields.forEach(function(field) {
-          selectedFieldMap[field.name] = true;
-        })
 
-      },
-      onDeselectAll: function(event) {
-        fields.forEach(function(field) {
-          selectedFieldMap[field.name] = false;
-        })
+      });
+    }
 
-      }
-
-    } );
-    $('#scorecard-college-select').multiselect(
+    let collegeSelector = "#chart-row-" + rowNumber + ' #scorecard-college-select';
+    $(collegeSelector).multiselect(
     { enableFiltering: true,
       includeSelectAllOption: true,
       nonSelectedText: "Select college to highlight",
@@ -137,42 +164,42 @@ function initDropdowns() {
         if (Array.isArray(options)) {
           options.forEach(function(option) {
             let college = option[0].label
-            selectedCollegeMap[college] = checked;
+            selectedCollegeMap[rowNumber][college] = checked;
           })
         } else {
           let college = options[0].label
-          selectedCollegeMap[college] = checked;
+          selectedCollegeMap[rowNumber][college] = checked;
         }
 
       },
       onDropdownHide: function(event) {
-        highlightHistograms()
+        highlightHistograms(rowNumber)
       },
       onSelectAll: function(event) {
         colleges.forEach(function(field) {
-          selectedCollegeMap[field.name] = true;
+          selectedCollegeMap[rowNumber][field.name] = true;
         })
 
       },
       onDeselectAll: function(event) {
         colleges.forEach(function(field) {
-          selectedCollegeMap[field.name] = false;
+          selectedCollegeMap[rowNumber][field.name] = false;
         })
 
       }
 
-    } );
+    });
 }
 
 
-function highlightHistograms() {
-  for (var key in histChartMap) {
-    let histChart = histChartMap[key];
-    histChart.highlight()(getSelectedCollegeNames());
+function highlightHistograms(rowNumber=1) {
+  for (var key in histChartMap[rowNumber]) {
+    let histChart = histChartMap[rowNumber][key];
+    histChart.highlight()(getSelectedCollegeNames(rowNumber));
   }
 }
 
-function getColleges() {
+function getColleges(rowNumber=1) {
   promiseGetData(["usnews_2019_rank", "control"])
   .then(function(data) {
     colleges = data;
@@ -227,8 +254,8 @@ function getColleges() {
       })
     })
 
-
-    $('#scorecard-college-select').multiselect('dataprovider', optGroups);
+    let collegeSelector = "#chart-row-" + rowNumber + " #scorecard-college-select";
+    $(collegeSelector).multiselect('dataprovider', optGroups);
   })
 }
 
@@ -246,20 +273,21 @@ function getNumericFields() {
     fields.forEach(function(field) {
       options.push({ label: field.name, title: field.name, value: field.name } );
     })
-    $('#scorecard-select').multiselect('dataprovider', options);
+
+    let fieldSelector = "#chart-row-1 #scorecard-select";
+    $(fieldSelector).multiselect('dataprovider', options);
   })
 }
 
 function promiseGetData(fieldNames) {
   return new Promise(function(resolve, reject) {
-    let theFieldNames = fieldNames ? fieldNames : getSelectedFieldNames();
 
-    if (theFieldNames.length == 0) {
+    if (fieldNames.length == 0) {
       resolve([])
     } else {
-      theFieldNames.push("name");
+      fieldNames.push("name");
 
-      d3.json("getData?fields=" + theFieldNames.join(","),
+      d3.json("getData?fields=" + fieldNames.join(","),
       function (err, data) {
         if (err) {
           console.log(err)

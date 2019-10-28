@@ -1,5 +1,9 @@
 body { margin:0;position:fixed;top:0;right:0;bottom:0;left:0;padding: 5px; }
 
+.hide {
+  display: none;
+}
+
 * {
   font-family: 'Raleway';
   color:  #454545 ;
@@ -38,14 +42,17 @@ body .selections {
 }
 
 .charts .hist {
-  margin-left: 20px;
+  margin-left: 0px;
 }
 
 .charts .chart-title {
   font-size: 13px;
   display: block;
   text-align: center;
-  font-weight: bold;
+  font-weight: 500;
+  width: 160px;
+  height: 40px;
+  line-height: 12px;
 }
 .charts .chart-label {
   font-size: 11px;
@@ -71,4 +78,9 @@ body .selections {
 .charts .hist svg rect.highlight {
   stroke: #2d96cb;
   stroke-width: 2px;
+}
+
+.btn-group-sm>.btn, .btn-sm {
+    height: 30px;
+    margin-top: 12px;
 }
