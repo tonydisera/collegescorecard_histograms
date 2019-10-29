@@ -3,10 +3,8 @@ let selectedFieldMap = {}
 
 
 let colleges = []
-let selectedCollegeMap = {1: {},
-                          2: {},
-                          3: {},
-                          4: {}}
+let selectedCollegeMap = {}
+let selectedColleges = []
 
 let histChartMap = {1: {}}
 
@@ -18,76 +16,112 @@ $(document).ready(function() {
 });
 
 function init() {
-    addRow(1)
+  initDropdowns();
+  getNumericFields();
+  getColleges();
 }
 
 
-function showHistogram(rowNumber=1) {
-  let fieldNames = getSelectedFieldNames();
-  promiseGetData(fieldNames)
-  .then(function(data) {
+function promiseShowHistograms(rowNumber=1, collegeName) {
 
-    let chartContainerSelector  = "#chart-row-" + rowNumber + " .charts"
-    let chartSelector           = "#chart-row-" + rowNumber + " .charts .hist"
-    d3.selectAll(chartSelector).remove()
-    histChartMap[rowNumber] = {}
+  return new Promise(function(resolve, reject) {
 
-    getSelectedFieldNames().forEach(function(selectedField) {
-      let selectedFieldName = selectedField.split(" ").join("_");
+    let fieldNames = getSelectedFieldNames();
+    promiseGetData(fieldNames)
+    .then(function(data) {
 
-      let selection = d3.select(chartContainerSelector).append("div").attr("class", "hist " + selectedFieldName);
+      let chartContainerSelector  = "#chart-row-" + rowNumber + " .charts"
+      let chartSelector           = "#chart-row-" + rowNumber + " .charts .hist"
+      d3.selectAll(chartSelector).remove()
+      histChartMap[rowNumber] = {}
 
-      selection.append("span").attr("class", "chart-title").text(selectedField)
+      getSelectedFieldNames().forEach(function(selectedField) {
+        let selectedFieldName = selectedField.split(" ").join("_");
 
-      let nonNullValues = data.filter(function(d) {
-        return d[selectedField];
+        let selection = d3.select(chartContainerSelector).append("div").attr("class", "hist " + selectedFieldName);
+
+        if (rowNumber == 1) {
+          selection.append("span").attr("class", "chart-title").text(selectedField)
+
+          let nonNullValues = data.filter(function(d) {
+            return d[selectedField];
+          })
+          let nullRatio = ((data.length - nonNullValues.length) / data.length);
+          let nullPct = nullRatio * 100;
+          let nullPctLabel  = +(Math.round(nullPct + "e+" + 0)  + "e-" + 0);
+          selection.append("span")
+                   .attr("class", function() {
+                      if (nullRatio > .25) {
+                        return "chart-label danger"
+                      } else {
+                        return "chart-label"
+                      }
+                   })
+                   .text(nullPctLabel + "% blank")
+
+        }
+
+
+        let histChart = histogram();
+        histChart.width(160)
+                 .height(160)
+                 .margin({top: 20, bottom: 62, left: 35, right: 8})
+        histChart.xValue(function(d) {
+          return d[selectedField];
+        })
+        selection.datum(data)
+        histChart(selection);
+
+        histChartMap[rowNumber][selectedFieldName] = histChart;
       })
-      let nullRatio = ((data.length - nonNullValues.length) / data.length);
-      let nullPct = nullRatio * 100;
-      let nullPctLabel  = +(Math.round(nullPct + "e+" + 0)  + "e-" + 0);
-      selection.append("span")
-               .attr("class", function() {
-                  if (nullRatio > .25) {
-                    return "chart-label danger"
-                  } else {
-                    return "chart-label"
-                  }
-               })
-               .text(nullPctLabel + "% blank")
+      resolve({rowNumber: rowNumber, collegeName: collegeName});
 
-      let histChart = histogram();
-      histChart.width(180)
-               .height(160)
-               .margin({top: 20, bottom: 60, left: 35, right: 30})
-      histChart.xValue(function(d) {
-        return d[selectedField];
-      })
-      selection.datum(data)
-      histChart(selection);
 
-      histChartMap[rowNumber][selectedFieldName] = histChart;
     })
-    setTimeout(function() {
-      highlightHistograms(rowNumber);
-    },3000)
-
   })
+
 }
 
-function addRow(rowNumber) {
-  rowSelector =  "#chart-row-" + rowNumber;
-  d3.select(rowSelector).classed("hide", false)
+function addRow(rowNumber, collegeName) {
 
-  initDropdowns(rowNumber);
 
-  if (rowNumber == 1) {
-    getNumericFields(rowNumber);
+  d3.select(".chart-container").select("#chart-row-" + rowNumber).remove();
+
+  var chartRow = d3.select(".chart-container")
+    .append("div")
+    .attr("id", "chart-row-" + rowNumber)
+    .attr("class", "chart-row")
+
+  chartRow.append("div")
+          .attr("class", "college-title")
+          .text(collegeName);
+
+  chartRow.append("div")
+    .attr("class", "charts")
+
+
+}
+
+function addChartRows() {
+
+
+  var collegeNames = getSelectedCollegeNames();
+  let rowNumber = 1
+  if (collegeNames.length > 0) {
+    collegeNames.forEach(function(collegeName) {
+      addRow(rowNumber, collegeName)
+      promiseShowHistograms(rowNumber, collegeName)
+      .then(function(data) {
+        highlightHistograms(data.rowNumber, data.collegeName);
+      })
+      rowNumber++;
+    })
+  } else {
+    addRow(1, "");
+    promiseShowHistograms(1, "");
   }
 
-  getColleges(rowNumber);
-  if (rowNumber != 1) {
-    showHistogram(rowNumber)
-  }
+
 
 }
 
@@ -101,18 +135,28 @@ function getSelectedFieldNames() {
 
 }
 
-function getSelectedCollegeNames(rowNumber=1) {
-  return colleges.filter(function(college) {
-    return selectedCollegeMap[rowNumber][college.name];
-  })
-  .map(function(college) {
-    return college.name;
-  })
+function getSelectedCollegeNames() {
+  return selectedColleges;
+}
 
+function selectField(fieldName, checked) {
+  selectedFieldMap[fieldName] = checked;
+}
+
+function selectCollege(collegeName, checked) {
+  selectedCollegeMap[collegeName] = checked;
+  if (checked) {
+    if (selectedColleges.indexOf(collegeName) < 0) {
+      selectedColleges.push(collegeName);
+    }
+  } else {
+    let idx = selectedColleges.indexOf(collegeName);
+    selectedColleges.slice(idx,1)
+  }
 }
 
 function initDropdowns(rowNumber=1) {
-  let fieldSelector = "#chart-row-" + rowNumber + ' #scorecard-select';
+  let fieldSelector = '#scorecard-select';
   if (rowNumber == 1) {
     $(fieldSelector).multiselect(
       { enableFiltering: true,
@@ -125,26 +169,26 @@ function initDropdowns(rowNumber=1) {
             if (Array.isArray(options)) {
               options.forEach(function(option) {
                 let field = option[0].label
-                selectedFieldMap[field] = checked;
+                selectField(field, checked);
               })
             } else {
               let field = options[0].label
-              selectedFieldMap[field] = checked;
+              selectField(field, checked);
             }
           }
         },
         onDropdownHide: function(event) {
-          showHistogram(rowNumber);
+          addChartRows()
         },
         onSelectAll: function(event) {
           fields.forEach(function(field) {
-            selectedFieldMap[field.name] = true;
+            selectField(field, true);
           })
 
         },
         onDeselectAll: function(event) {
           fields.forEach(function(field) {
-            selectedFieldMap[field.name] = false;
+            selectField(field, false);
           })
 
         }
@@ -152,38 +196,37 @@ function initDropdowns(rowNumber=1) {
       });
     }
 
-    let collegeSelector = "#chart-row-" + rowNumber + ' #scorecard-college-select';
+    let collegeSelector = '#scorecard-college-select';
     $(collegeSelector).multiselect(
     { enableFiltering: true,
       includeSelectAllOption: true,
       nonSelectedText: "Select college to highlight",
       enableCaseInsensitiveFiltering: true,
       enableClickableOptGroups: true,
-      collapseOptGroupsByDefault: true,
       onChange: function(options, checked) {
         if (Array.isArray(options)) {
           options.forEach(function(option) {
             let college = option[0].label
-            selectedCollegeMap[rowNumber][college] = checked;
+            selectCollege(college, checked);
           })
         } else {
           let college = options[0].label
-          selectedCollegeMap[rowNumber][college] = checked;
+          selectCollege(college, checked);
         }
 
       },
       onDropdownHide: function(event) {
-        highlightHistograms(rowNumber)
+        addChartRows();
       },
       onSelectAll: function(event) {
-        colleges.forEach(function(field) {
-          selectedCollegeMap[rowNumber][field.name] = true;
+        colleges.forEach(function(college) {
+          selectCollege(college, true);
         })
 
       },
       onDeselectAll: function(event) {
-        colleges.forEach(function(field) {
-          selectedCollegeMap[rowNumber][field.name] = false;
+        colleges.forEach(function(college) {
+          selectCollege(college, false);
         })
 
       }
@@ -192,10 +235,10 @@ function initDropdowns(rowNumber=1) {
 }
 
 
-function highlightHistograms(rowNumber=1) {
+function highlightHistograms(rowNumber=1, collegeName) {
   for (var key in histChartMap[rowNumber]) {
     let histChart = histChartMap[rowNumber][key];
-    histChart.highlight()(getSelectedCollegeNames(rowNumber));
+    histChart.highlight()([collegeName]);
   }
 }
 
@@ -254,7 +297,7 @@ function getColleges(rowNumber=1) {
       })
     })
 
-    let collegeSelector = "#chart-row-" + rowNumber + " #scorecard-college-select";
+    let collegeSelector = "#scorecard-college-select";
     $(collegeSelector).multiselect('dataprovider', optGroups);
   })
 }
@@ -274,7 +317,7 @@ function getNumericFields() {
       options.push({ label: field.name, title: field.name, value: field.name } );
     })
 
-    let fieldSelector = "#chart-row-1 #scorecard-select";
+    let fieldSelector = "#scorecard-select";
     $(fieldSelector).multiselect('dataprovider', options);
   })
 }

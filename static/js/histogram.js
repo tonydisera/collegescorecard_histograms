@@ -8,11 +8,14 @@ function histogram() {
       return d[0];
     };
 
+  var x = null;
+  var y = null;
+
   var bins = null;
   var data = null;
   var container = null;
 
-  var highlight = function(names) {
+  var outline = function(names) {
 
     let selectedData = data.filter(function(d) {
       return names.indexOf(d.name) >= 0;
@@ -44,6 +47,63 @@ function histogram() {
 
   }
 
+  function highlight(names) {
+
+    container.selectAll("svg .markers .marker").remove();
+
+    names.forEach(function(name) {
+      let selectedData = data.filter(function(d) {
+        return name == d.name;
+      })
+
+
+
+      let matchedBins = bins.filter(function(bin) {
+        let matchingElements = selectedData.filter(function(d) {
+          if (xValue(d) >= bin.x0 && xValue(d) < bin.x1) {
+            return true;
+          } else {
+            return false;
+          }
+        })
+        return matchingElements.length > 0;
+      })
+
+      if (matchedBins.length > 0) {
+        let theBin = matchedBins[0];
+        let xPos = x(theBin.x0) - ((x(theBin.x1) - x(theBin.x0))/2);
+        let yPos = height - margin.top - margin.bottom;
+
+        let marker = container.select("svg .markers").selectAll(".marker")
+         .data([0])
+         .enter()
+         .append("g")
+         .attr("class", "marker");
+
+        marker.append("line")
+         .attr("x1", xPos)
+         .attr("x2", xPos)
+         .attr("y1", 0)
+         .attr("y2", yPos)
+         .style("opacity", 1)
+
+        marker.append("circle")
+         .attr("cx", xPos)
+         .attr("cy", yPos)
+         .attr("r", "3")
+         .style("opacity", 1)
+
+        marker.append("text")
+         .attr("class", "marker-label")
+         .attr("x", xPos)
+         .attr("y", -2)
+         .style("text-anchor", "middle")
+         .text(xValue(selectedData[0]))
+      }
+    })
+
+  }
+
 
 
   function chart(selection) {
@@ -63,7 +123,7 @@ function histogram() {
       innerHeight = height - margin.top - margin.bottom;
       innerWidth = width - margin.left - margin.right;
 
-      var x = d3.scaleLinear()
+      x = d3.scaleLinear()
         .domain(d3.extent(dataValues))
         .range([0, innerWidth])
 
@@ -71,7 +131,7 @@ function histogram() {
           .domain(x.domain())
           .thresholds(x.ticks(40))(dataValues)
 
-      var y = d3.scaleLinear()
+      y = d3.scaleLinear()
         .domain([0, d3.max(bins, d => d.length)]).nice()
         .range([innerHeight, 0])
 
@@ -128,6 +188,13 @@ function histogram() {
          .attr("height", d => y(0) - y(d.length));
 
       bars.exit().remove();
+
+
+      container.selectAll("svg .markers").remove();
+      container.select("svg")
+               .append("g")
+               .attr("class", "markers")
+               .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
     });
   }
 

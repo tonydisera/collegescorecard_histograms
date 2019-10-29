@@ -50,9 +50,11 @@ body .selections {
   display: block;
   text-align: center;
   font-weight: 500;
-  width: 160px;
-  height: 40px;
+  height: 44px;
   line-height: 12px;
+  white-space: normal;
+  word-break: break-word;
+  width: 160px;
 }
 .charts .chart-label {
   font-size: 11px;
@@ -60,12 +62,18 @@ body .selections {
   text-align: center;
 }
 .charts .chart-label.danger {
-  color: darkred;
-  font-weight: bold;
+  background: #fff7d9;
+  width: 70px;
+  text-align: center;
+  color: black;
+  margin: auto;
+  height: 13px;
+  line-height: 13px;
+  margin-top: 2px;
 }
 
 .charts .hist svg .x.axis .tick text {
-  transform: rotate(45deg) translate(7px,-7px);
+  transform: rotate(90deg) translate(6px,-12px);
   text-anchor: start;
 }
 
@@ -78,6 +86,19 @@ body .selections {
 .charts .hist svg rect.highlight {
   stroke: #2d96cb;
   stroke-width: 2px;
+}
+
+.charts .hist svg text.marker-label {
+  font-size: 10px;
+  font-weight: 500;
+}
+.charts .hist svg .marker {
+  fill: #1d68de
+}
+.charts .hist svg .marker line {
+  stroke: #1d68de;
+  stroke-width: 5px;
+  stroke-opacity: .5;
 }
 
 .btn-group-sm>.btn, .btn-sm {
