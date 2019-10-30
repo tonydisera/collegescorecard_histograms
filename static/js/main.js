@@ -107,14 +107,21 @@ function addChartRows() {
 
   var collegeNames = getSelectedCollegeNames();
   let rowNumber = 1
+  let promises = []
   if (collegeNames.length > 0) {
     collegeNames.forEach(function(collegeName) {
       addRow(rowNumber, collegeName)
-      promiseShowHistograms(rowNumber, collegeName)
-      .then(function(data) {
-        highlightHistograms(data.rowNumber, data.collegeName);
-      })
+      let p = promiseShowHistograms(rowNumber, collegeName)
+      promises.push(p)
       rowNumber++;
+    })
+    Promise.all(promises)
+    .then(function() {
+      rowNumber = 1;
+      collegeNames.forEach(function(collegeName) {
+        highlightHistograms(rowNumber, collegeName);
+        rowNumber++;
+      })
     })
   } else {
     addRow(1, "");

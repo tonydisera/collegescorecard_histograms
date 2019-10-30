@@ -81,24 +81,38 @@ function histogram() {
          .attr("class", "marker");
 
         marker.append("line")
-         .attr("x1", xPos)
-         .attr("x2", xPos)
+         .attr("x1", 0)
+         .attr("x2", 0)
          .attr("y1", 0)
          .attr("y2", yPos)
          .style("opacity", 1)
 
         marker.append("circle")
-         .attr("cx", xPos)
+         .attr("cx", 0)
          .attr("cy", yPos)
          .attr("r", "3")
          .style("opacity", 1)
 
         marker.append("text")
          .attr("class", "marker-label")
-         .attr("x", xPos)
+         .attr("x", 0)
          .attr("y", -2)
          .style("text-anchor", "middle")
          .text(xValue(selectedData[0]))
+
+         marker.selectAll("line")
+               .transition()
+               .duration(1000)
+               .attr("x1", xPos)
+               .attr("x2", xPos)
+        marker.selectAll("circle")
+               .transition()
+               .duration(1000)
+               .attr("x", xPos)
+        marker.selectAll("text")
+               .transition()
+               .duration(1000)
+               .attr("x", xPos)
       }
     })
 
